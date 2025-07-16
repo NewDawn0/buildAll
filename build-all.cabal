@@ -1,0 +1,32 @@
+cabal-version:      3.0
+name:               build-all
+version:            0.1.0.0
+synopsis:           A tool to build all outputs of a Nix flake
+description:        A tool to build all outputs of a Nix flake
+homepage:           https://github.com/NewDawn0/buildAll
+license:            MIT
+license-file:       LICENSE
+author:             NewDawn0
+maintainer:         newdawn.v0.0+git@gmail.com
+copyright:          2025 NewDawn0
+build-type:         Simple
+extra-doc-files:    CHANGELOG.md
+
+common warnings
+    ghc-options: -Wall
+
+executable build-all
+    import:           warnings
+    main-is:          Main.hs
+    other-modules:    Build,
+                      CLI,
+                      Flake
+    build-depends:    base ^>=4.19.2.0,
+                      aeson,
+                      bytestring,
+                      directory,
+                      filepath,
+                      optparse-applicative,
+                      process,
+    hs-source-dirs:   src
+    default-language: Haskell2010
