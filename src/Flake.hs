@@ -1,25 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 module Flake
-  ( FlakeOutput(..)
-  , getFlakeOutput
-  ) where
+  ( FlakeOutput (..),
+    getFlakeOutput,
+  )
+where
 
-import Data.Aeson
 import Control.Monad (foldM)
-import System.Directory (getHomeDirectory)
-import System.FilePath ((</>), splitDirectories)
-import System.Process (readProcess)
-import qualified Data.ByteString.Lazy.Char8 as BL
-import qualified Data.Aeson.KeyMap as KM
+import Data.Aeson
 import qualified Data.Aeson.Key as K
+import qualified Data.Aeson.KeyMap as KM
+import qualified Data.ByteString.Lazy.Char8 as BL
+import System.Directory (getHomeDirectory)
+import System.FilePath (splitDirectories, (</>))
+import System.Process (readProcess)
 
 data FlakeOutput = FlakeOutput
-  { flakePath :: FilePath
-  , systemArch :: String
-  , packages :: [String]
-  , devShells :: [String]
-  } deriving (Show)
+  { flakePath :: FilePath,
+    systemArch :: String,
+    packages :: [String],
+    devShells :: [String]
+  }
+  deriving (Show)
 
 getFlakeJSON :: FilePath -> IO (Either String Value)
 getFlakeJSON path = do
@@ -31,17 +33,18 @@ getSection :: String -> Object -> String -> [String]
 getSection sectionName root system =
   let keys = do
         sectionObj <- KM.lookup (K.fromString sectionName) root >>= asObject
-        systemObj  <- KM.lookup (K.fromString system) sectionObj >>= asObject
+        systemObj <- KM.lookup (K.fromString system) sectionObj >>= asObject
         return $ map K.toString (KM.keys systemObj)
-  in maybe [] id keys
+   in maybe [] id keys
 
 buildFlakeOutput :: FilePath -> String -> Object -> FlakeOutput
-buildFlakeOutput path system root = FlakeOutput
-  { flakePath = path
-  , systemArch = system
-  , packages = getSection "packages" root system
-  , devShells = getSection "devShells" root system
-  }
+buildFlakeOutput path system root =
+  FlakeOutput
+    { flakePath = path,
+      systemArch = system,
+      packages = getSection "packages" root system,
+      devShells = getSection "devShells" root system
+    }
 
 getFlakeOutput :: String -> IO (Maybe FlakeOutput)
 getFlakeOutput path = do
@@ -54,22 +57,22 @@ getFlakeOutput path = do
 
 -- Helpers
 getSystem :: IO String
-getSystem  = do
+getSystem = do
   putStrLn "Getting system architecture"
   readProcess "nix" ["eval", "--raw", "--impure", "--expr", "builtins.currentSystem"] ""
 
 absolutize :: FilePath -> IO FilePath
 absolutize path = do
-    home <- getHomeDirectory
-    let (base, components) = case path of
-          '~':'/':rest -> (home, splitDirectories rest)
-          "~"          -> (home, [])
-          _            -> ("", splitDirectories path)
-    foldM resolve base components
+  home <- getHomeDirectory
+  let (base, components) = case path of
+        '~' : '/' : rest -> (home, splitDirectories rest)
+        "~" -> (home, [])
+        _ -> ("", splitDirectories path)
+  foldM resolve base components
   where
     resolve acc ".." = return $ takeDirectory acc
-    resolve acc "."  = return acc
-    resolve acc dir  = return $ acc </> dir
+    resolve acc "." = return acc
+    resolve acc dir = return $ acc </> dir
     takeDirectory = reverse . drop 1 . dropWhile (/= '/') . reverse
 
 asObject :: Value -> Maybe Object

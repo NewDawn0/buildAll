@@ -1,15 +1,19 @@
 module Main where
 
+import CLI (CLIOptions (..), cliParser, validateOptions)
 import Flake (getFlakeOutput)
-import CLI (CLIOptions(..), cliParser, validateOptions)
 import Options.Applicative
 
 main :: IO ()
 main = do
-  opts <- execParser $ info (cliParser <**> helper)
-    ( fullDesc
-      <> progDesc "Build all outputs of a flake"
-      <> header "build-all - Build all outputs of a flake" )
+  opts <-
+    execParser $
+      info
+        (cliParser <**> helper)
+        ( fullDesc
+            <> progDesc "Build all outputs of a flake"
+            <> header "build-all - Build all outputs of a flake"
+        )
   result <- getFlakeOutput (path opts)
   case result of
     Just output -> do

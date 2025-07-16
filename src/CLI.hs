@@ -2,42 +2,50 @@
 {-# LANGUAGE RecordWildCards #-}
 
 module CLI
-  ( CLIOptions(..)
-  , cliParser
-  , validateOptions
-  ) where
+  ( CLIOptions (..),
+    cliParser,
+    validateOptions,
+  )
+where
 
+import Build (buildAllOutputs, buildDevShells, buildPackages)
+import Flake (FlakeOutput (..))
 import Options.Applicative
-import Flake (FlakeOutput(..))
-import Build (buildAllOutputs, buildPackages, buildDevShells)
 
 data CLIOptions = CLIOptions
-  { optAll     :: Bool
-  , optPkgs      :: Bool
-  , optDevShells :: Bool
-  , path :: String
-  } deriving (Show)
+  { optAll :: Bool,
+    optPkgs :: Bool,
+    optDevShells :: Bool,
+    path :: String
+  }
+  deriving (Show)
 
 cliParser :: Parser CLIOptions
-cliParser = CLIOptions
-  <$> switch
+cliParser =
+  CLIOptions
+    <$> switch
       ( long "packages"
-      <> short 'p'
-      <> help "Build all packages" )
-  <*> switch
+          <> short 'p'
+          <> help "Build all packages"
+      )
+    <*> switch
       ( long "dev-shells"
-      <> short 'd'
-      <> help "Build all dev shells" )
-  <*> switch
+          <> short 'd'
+          <> help "Build all dev shells"
+      )
+    <*> switch
       ( long "all"
-      <> short 'a'
-      <> help "Build all outputs" )
-  <*> argument str
+          <> short 'a'
+          <> help "Build all outputs"
+      )
+    <*> argument
+      str
       ( metavar "FLAKE_PATH"
-      <> help "Path to the flake" )
+          <> help "Path to the flake"
+      )
 
 validateOptions :: CLIOptions -> FlakeOutput -> IO ()
-validateOptions CLIOptions{..} output
+validateOptions CLIOptions {..} output
   | optAll = buildAllOutputs output
   | optPkgs = buildPackages output
   | optDevShells = buildDevShells output
