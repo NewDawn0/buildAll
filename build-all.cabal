@@ -20,9 +20,11 @@ executable build-all
     main-is:          Main.hs
     other-modules:    Build,
                       CLI,
+                      Colour,
                       Flake
     build-depends:    base ^>=4.19.2.0,
                       aeson,
+                      ansi-terminal,
                       bytestring,
                       directory,
                       filepath,

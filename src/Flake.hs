@@ -6,6 +6,7 @@ module Flake
   )
 where
 
+import Colour (Colour (..), colourify, fixLine, tmpLine)
 import Control.Monad (foldM)
 import Data.Aeson
 import qualified Data.Aeson.Key as K
@@ -25,8 +26,9 @@ data FlakeOutput = FlakeOutput
 
 getFlakeJSON :: FilePath -> IO (Either String Value)
 getFlakeJSON path = do
-  putStrLn $ "> Getting flake output for " ++ take 30 path
+  tmpLine $ colourify Yellow "> " ++ "Getting flake output for " ++ take 30 path
   raw <- readProcess "nix" ["flake", "show", path, "--json", "--all-systems"] ""
+  fixLine $ colourify Green "> " ++ "Found flake output for " ++ take 30 path
   return $ eitherDecode $ BL.pack raw
 
 getSection :: String -> Object -> String -> [String]
@@ -58,8 +60,10 @@ getFlakeOutput path = do
 -- Helpers
 getSystem :: IO String
 getSystem = do
-  putStrLn "> Getting system architecture"
-  readProcess "nix" ["eval", "--raw", "--impure", "--expr", "builtins.currentSystem"] ""
+  tmpLine $ colourify Yellow "> " ++ "Getting system architecture"
+  arch <- readProcess "nix" ["eval", "--raw", "--impure", "--expr", "builtins.currentSystem"] ""
+  fixLine $ colourify Green "> " ++ "Found system architecture: " ++ arch
+  return arch
 
 absolutise :: FilePath -> IO FilePath
 absolutise path = do

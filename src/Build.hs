@@ -8,13 +8,16 @@ module Build
   )
 where
 
+import Colour (Colour (..), colourify, fixLine, tmpLine)
 import Flake (FlakeOutput (..))
 import System.Process (callProcess)
 
 build :: FlakeOutput -> String -> IO ()
 build FlakeOutput {flakePath} pkgAttr = do
-  putStrLn $ "> Building " ++ pkgAttr
-  callProcess "nix" ["build", flakePath ++ "#" ++ pkgAttr]
+  tmpLine $ colourify Yellow "> " ++ "Building " ++ pkgAttr
+  out <- callProcess "nix" ["build", flakePath ++ "#" ++ pkgAttr]
+  fixLine $ colourify Green ">" ++ " Built " ++ pkgAttr
+  return out
 
 buildPackages :: FlakeOutput -> IO ()
 buildPackages out@FlakeOutput {packages} = do
