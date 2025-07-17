@@ -11,7 +11,6 @@ where
 import Build (buildAllOutputs, buildDevShells, buildPackages)
 import Flake (FlakeOutput (..))
 import Options.Applicative
-import System.FilePath (FilePath)
 
 data CLIOptions = CLIOptions
   { optAll :: Bool,
@@ -60,4 +59,4 @@ validateOptions CLIOptions {..} output
   | optAll = buildAllOutputs output
   | optPkgs = buildPackages output
   | optDevShells = buildDevShells output
-  | otherwise = putStrLn "No outputs to build"
+  | otherwise = buildAllOutputs output
