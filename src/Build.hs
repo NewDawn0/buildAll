@@ -1,6 +1,5 @@
 {-# LANGUAGE NamedFieldPuns #-}
 
---
 module Build
   ( buildAllOutputs,
     buildDevShells,
