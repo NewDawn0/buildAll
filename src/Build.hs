@@ -3,8 +3,8 @@
 --
 module Build
   ( buildAllOutputs,
-    buildPackages,
     buildDevShells,
+    buildPackages,
   )
 where
 
@@ -13,7 +13,7 @@ import System.Process (callProcess)
 
 build :: FlakeOutput -> String -> IO ()
 build FlakeOutput {flakePath} pkgAttr = do
-  putStrLn $ "Building " ++ pkgAttr
+  putStrLn $ "> Building " ++ pkgAttr
   callProcess "nix" ["build", flakePath ++ "#" ++ pkgAttr]
 
 buildPackages :: FlakeOutput -> IO ()

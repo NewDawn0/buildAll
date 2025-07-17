@@ -3,7 +3,7 @@
 
 module CLI
   ( CLIOptions (..),
-    cliParser,
+    parseArgs,
     validateOptions,
   )
 where
@@ -11,6 +11,7 @@ where
 import Build (buildAllOutputs, buildDevShells, buildPackages)
 import Flake (FlakeOutput (..))
 import Options.Applicative
+import System.FilePath (FilePath)
 
 data CLIOptions = CLIOptions
   { optAll :: Bool,
@@ -42,6 +43,16 @@ cliParser =
       str
       ( metavar "FLAKE_PATH"
           <> help "Path to the flake"
+      )
+
+parseArgs :: IO CLIOptions
+parseArgs =
+  execParser $
+    info
+      (cliParser <**> helper)
+      ( fullDesc
+          <> progDesc "Build all outputs of a flake"
+          <> header "build-all - Build all outputs of a flake"
       )
 
 validateOptions :: CLIOptions -> FlakeOutput -> IO ()

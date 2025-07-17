@@ -11,8 +11,8 @@ import Data.Aeson
 import qualified Data.Aeson.Key as K
 import qualified Data.Aeson.KeyMap as KM
 import qualified Data.ByteString.Lazy.Char8 as BL
-import System.Directory (getHomeDirectory)
-import System.FilePath (splitDirectories, (</>))
+import System.Directory (getHomeDirectory, makeAbsolute)
+import System.FilePath (isPathSeparator, splitDirectories, (</>))
 import System.Process (readProcess)
 
 data FlakeOutput = FlakeOutput
@@ -25,7 +25,7 @@ data FlakeOutput = FlakeOutput
 
 getFlakeJSON :: FilePath -> IO (Either String Value)
 getFlakeJSON path = do
-  putStrLn $ "Getting flake output for " ++ path
+  putStrLn $ "> Getting flake output for " ++ take 30 path
   raw <- readProcess "nix" ["flake", "show", path, "--json", "--all-systems"] ""
   return $ eitherDecode $ BL.pack raw
 
@@ -49,7 +49,7 @@ buildFlakeOutput path system root =
 getFlakeOutput :: String -> IO (Maybe FlakeOutput)
 getFlakeOutput path = do
   system <- getSystem
-  absPath <- absolutize path
+  absPath <- absolutise path
   flakeJSON <- getFlakeJSON absPath
   return $ case flakeJSON of
     Right (Object root) -> Just $ buildFlakeOutput absPath system root
@@ -58,22 +58,36 @@ getFlakeOutput path = do
 -- Helpers
 getSystem :: IO String
 getSystem = do
-  putStrLn "Getting system architecture"
+  putStrLn "> Getting system architecture"
   readProcess "nix" ["eval", "--raw", "--impure", "--expr", "builtins.currentSystem"] ""
 
-absolutize :: FilePath -> IO FilePath
-absolutize path = do
+absolutise :: FilePath -> IO FilePath
+absolutise path = do
   home <- getHomeDirectory
   let (base, components) = case path of
         '~' : '/' : rest -> (home, splitDirectories rest)
         "~" -> (home, [])
-        _ -> ("", splitDirectories path)
-  foldM resolve base components
+        "" -> (".", [])
+        _
+          | isPathSeparator (head path) -> ("/", splitDirectories (tail path))
+          | otherwise -> (".", splitDirectories path)
+  absBase <- if null base then makeAbsolute "." else makeAbsolute base
+  foldM resolveComponent absBase components
   where
-    resolve acc ".." = return $ takeDirectory acc
-    resolve acc "." = return acc
-    resolve acc dir = return $ acc </> dir
-    takeDirectory = reverse . drop 1 . dropWhile (/= '/') . reverse
+    resolveComponent :: FilePath -> String -> IO FilePath
+    resolveComponent acc dir
+      | dir == "." = return acc
+      | dir == ".." = return $ takeDirectory acc
+      | otherwise = return $ acc </> dir
+    takeDirectory :: FilePath -> FilePath
+    takeDirectory p =
+      case reverse p of
+        [] -> "."
+        xs -> case dropWhile isPathSeparator xs of
+          [] -> if any isPathSeparator p then "/" else "."
+          ys -> case dropWhile (not . isPathSeparator) ys of
+            [] -> "."
+            zs -> reverse (dropWhile isPathSeparator zs)
 
 asObject :: Value -> Maybe Object
 asObject (Object o) = Just o
