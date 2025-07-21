@@ -7,7 +7,7 @@ module Colour
   )
 where
 
-import System.Console.ANSI (clearLine, cursorUp, restoreCursor, saveCursor, setCursorColumn)
+import System.Console.ANSI (clearLine, restoreCursor, saveCursor, setCursorColumn)
 import System.IO (hFlush, stdout)
 
 data Colour = Red | Green | Yellow | Reset
