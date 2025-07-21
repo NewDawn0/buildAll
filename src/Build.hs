@@ -3,6 +3,7 @@
 module Build
   ( buildAllOutputs,
     buildDevShells,
+    buildFormatters,
     buildPackages,
   )
 where
@@ -10,6 +11,9 @@ where
 import Colour (Colour (..), colourify, fixLine, tmpLine)
 import Flake (FlakeOutput (..))
 import System.Process (callProcess)
+
+mkFlakeAttr :: String -> String -> String -> String
+mkFlakeAttr prefix systemArch pkg = prefix ++ systemArch ++ "." ++ pkg
 
 build :: FlakeOutput -> String -> IO ()
 build FlakeOutput {flakePath} pkgAttr = do
@@ -24,10 +28,14 @@ buildPackages out@FlakeOutput {packages} = do
 
 buildDevShells :: FlakeOutput -> IO ()
 buildDevShells out@FlakeOutput {devShells, systemArch} = do
-  let flakeAttr shell = "devShells." ++ systemArch ++ "." ++ shell
-  mapM_ (build out . flakeAttr) devShells
+  mapM_ (build out . mkFlakeAttr "devShells." systemArch) devShells
+
+buildFormatters :: FlakeOutput -> IO ()
+buildFormatters out@FlakeOutput {formatters, systemArch} = do
+  mapM_ (build out . mkFlakeAttr "formatter." systemArch) formatters
 
 buildAllOutputs :: FlakeOutput -> IO ()
 buildAllOutputs out = do
   buildPackages out
   buildDevShells out
+  buildFormatters out

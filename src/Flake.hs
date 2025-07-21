@@ -20,7 +20,9 @@ data FlakeOutput = FlakeOutput
   { flakePath :: FilePath,
     systemArch :: String,
     packages :: [String],
-    devShells :: [String]
+    devShells :: [String],
+    formatters :: [String]
+    -- TODO: Add overlays & checks
   }
   deriving (Show)
 
@@ -45,7 +47,8 @@ buildFlakeOutput path system root =
     { flakePath = path,
       systemArch = system,
       packages = getSection "packages" root system,
-      devShells = getSection "devShells" root system
+      devShells = getSection "devShells" root system,
+      formatters = getSection "formatter" root system
     }
 
 getFlakeOutput :: String -> IO (Maybe FlakeOutput)
